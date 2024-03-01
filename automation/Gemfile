@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# Specify your gem's dependencies in automation.gemspec
+gemspec
+
+gem "rake", "~> 13.0"
+gem "automation", "~> 0.1.0"
+gem "rspec/minitest/test-unit/test", "~> "
+gem  "rdoc", "~>  "
+gem  "google-api-client" "~>"
+gem "jekyll", "~>"
