@@ -1,5 +1,5 @@
 
-```markdown
+markdown
 # Automated YouTube Channel Program Installation Guide
 
 This guide will walk you through the installation process for setting up an automated YouTube channel program using Ruby programming language.
