@@ -14,14 +14,14 @@ Before you begin, ensure you have the following prerequisites installed on your 
    Clone the repository containing the automated YouTube channel program source code to your local machine.
 
    ```bash
-   git clone https://github.com/your-username/automated-youtube-channel.git
+   git clone https://github.com/munsterkreations/automation
    ```
 
 2. **Navigate to the Project Directory:**
    Change your current directory to the cloned project directory.
 
    ```bash
-   cd automated-youtube-channel
+   cd automation
    ```
 
 3. **Install Dependencies:**
