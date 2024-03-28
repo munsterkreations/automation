@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   # The `git ls-files -z` loads the files in the Rubythat have been added into git.
   spec.files = `git ls-files -z`.split("\x0").reject { |f|
       (File.expand_path(f) == __FILE__) ||
-        f.match(%r{^(bin/ test/ spec/ features)/}[ .git .circleci appveyor Gemfile])}
+        f.match(%r{^(bin/ test/ spec/ site/ features)/}[ .git .circleci appveyor Gemfile])}
     end
   end
   spec.bindir = "exe"
