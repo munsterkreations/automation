@@ -27,12 +27,17 @@ Gem::Specification.new do |spec|
 
   # Include only relevant files (exclude tests, hidden files, tmp, etc.)
   spec.files = Dir.glob("lib/**/*") + ["README.md", "LICENSE.txt"]
+
+  # Exclude test/ spec/ features/ tmp/ directories and hidden files
   spec.files.reject! do |f|
     f =~ %r{^(test|spec|features|tmp|\.|exe/)} || File.directory?(f)
   end
 
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+  # Automatically include any executables in exe/
+  spec.bindir      = "exe"
+  exe_files = Dir.glob("exe/*").select { |f| File.file?(f) }
+  spec.executables = exe_files.map { |f| File.basename(f) }
+
   spec.require_paths = ["lib"]
 
   # Dependencies
