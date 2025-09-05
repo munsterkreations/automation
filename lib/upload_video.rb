@@ -1,91 +1,113 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
-require 'rubygems'
-gem 'google-api-client', '>0.7'
-require 'google/api_client'
-require 'google/api_client/client_secrets'
-require 'google/api_client/auth/file_storage'
-require 'google/api_client/auth/installed_app'
-require 'trollop'
+require "google/apis/youtube_v3"
+require "signet/oauth_2/client"
+require "json"
+require "optparse"
+require "launchy"
+require "webrick"
 
-# A limited OAuth 2 access scope that allows for uploading files, but not other
-# types of account access.
-YOUTUBE_UPLOAD_SCOPE = 'https://www.googleapis.com/auth/youtube.upload'
-YOUTUBE_API_SERVICE_NAME = 'youtube'
-YOUTUBE_API_VERSION = 'v3'
+# ---- CONFIG ----
+OOB_URI = "http://localhost:8080"
+CREDENTIALS_FILE = "credentials.json" # from Google Cloud Console
+TOKEN_FILE = "token.json"
+SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 
-def get_authenticated_service
-  client = Google::APIClient.new(
-    :application_name => $PROGRAM_NAME,
-    :application_version => '1.0.0'
+# ---- AUTH HELPER ----
+def authorize
+  credentials = JSON.parse(File.read(CREDENTIALS_FILE))["installed"]
+
+  client = Signet::OAuth2::Client.new(
+    client_id: credentials["client_id"],
+    client_secret: credentials["client_secret"],
+    authorization_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_credential_uri: "https://oauth2.googleapis.com/token",
+    redirect_uri: credentials["redirect_uris"].first,
+    scope: SCOPE
   )
-  youtube = client.discovered_api(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
 
-  file_storage = Google::APIClient::FileStorage.new("#{$PROGRAM_NAME}-oauth2.json")
-  if file_storage.authorization.nil?
-    client_secrets = Google::APIClient::ClientSecrets.load
-    flow = Google::APIClient::InstalledAppFlow.new(
-      :client_id => client_secrets.client_id,
-      :client_secret => client_secrets.client_secret,
-      :scope => [YOUTUBE_UPLOAD_SCOPE]
-    )
-    client.authorization = flow.authorize(file_storage)
+  if File.exist?(TOKEN_FILE)
+    token_data = JSON.parse(File.read(TOKEN_FILE))
+    client.update_token!(token_data)
+    if client.expired?
+      client.fetch_access_token!
+      save_token(client)
+    end
   else
-    client.authorization = file_storage.authorization
-  end
-
-  return client, youtube
-end
-
-def main
-  opts = Trollop::options do
-    opt :file, 'Video file to upload', :type => String
-    opt :title, 'Video title', :default => 'Test Title', :type => String
-    opt :description, 'Video description',
-          :default => 'Test Description', :type => String
-    opt :category_id, 'Numeric video category. See https://developers.google.com/youtube/v3/docs/videoCategories/list',
-          :default => 22, :type => :int
-    opt :keywords, 'Video keywords, comma-separated',
-          :default => '', :type => String
-    opt :privacy_status, 'Video privacy status: public, private, or unlisted',
-          :default => 'public', :type => String
-  end
-
-  if opts[:file].nil? or not File.file?(opts[:file])
-    Trollop::die :file, 'does not exist'
-  end
-
-  client, youtube = get_authenticated_service
-
-  begin
-    body = {
-      :snippet => {
-        :title => opts[:title],
-        :description => opts[:description],
-        :tags => opts[:keywords].split(','),
-        :categoryId => opts[:category_id],
-      },
-      :status => {
-        :privacyStatus => opts[:privacy_status]
-      }
-    }
-
-    videos_insert_response = client.execute!(
-      :api_method => youtube.videos.insert,
-      :body_object => body,
-      :media => Google::APIClient::UploadIO.new(opts[:file], 'video/*'),
-      :parameters => {
-        :uploadType => 'resumable',
-        :part => body.keys.join(',')
-      }
+    # Local server flow
+    server = WEBrick::HTTPServer.new(
+      Port: 8080,
+      Logger: WEBrick::Log.new(File::NULL),
+      AccessLog: []
     )
 
-    videos_insert_response.resumable_upload.send_all(client)
+    server.mount_proc "/" do |req, res|
+      client.code = req.query["code"]
+      client.fetch_access_token!
+      save_token(client)
+      res.body = "<h3>✅ Auth complete, you can close this window.</h3>"
+      server.shutdown
+    end
 
-    puts "Video id '#{videos_insert_response.data.id}' was successfully uploaded."
-  rescue Google::APIClient::TransmissionError => e
-    puts e.result.body
+    Launchy.open(client.authorization_uri.to_s)
+    trap("INT") { server.shutdown }
+    server.start
+  end
+
+  client
+end
+
+def save_token(client)
+  File.open(TOKEN_FILE, "w", 0600) do |file|
+    file.write(JSON.pretty_generate(client.to_h))
   end
 end
 
-main
+# ---- CLI OPTIONS ----
+options = {
+  title: "Test Title",
+  description: "Test Description",
+  category_id: "22",
+  keywords: "",
+  privacy_status: "public"
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: uploader.rb [options]"
+
+  opts.on("-f", "--file FILE", "Video file to upload") { |v| options[:file] = v }
+  opts.on("-t", "--title TITLE", "Video title") { |v| options[:title] = v }
+  opts.on("-d", "--description DESC", "Video description") { |v| options[:description] = v }
+  opts.on("-c", "--category ID", "Category ID") { |v| options[:category_id] = v }
+  opts.on("-k", "--keywords x,y,z", "Keywords (comma-separated)") { |v| options[:keywords] = v }
+  opts.on("-p", "--privacy STATUS", "Privacy: public|private|unlisted") { |v| options[:privacy_status] = v }
+end.parse!
+
+abort("❌ Must specify --file") unless options[:file] && File.file?(options[:file])
+
+# ---- MAIN ----
+youtube = Google::Apis::YoutubeV3::YouTubeService.new
+youtube.authorization = authorize
+
+video = Google::Apis::YoutubeV3::Video.new(
+  snippet: Google::Apis::YoutubeV3::VideoSnippet.new(
+    title: options[:title],
+    description: options[:description],
+    tags: options[:keywords].split(","),
+    category_id: options[:category_id]
+  ),
+  status: Google::Apis::YoutubeV3::VideoStatus.new(
+    privacy_status: options[:privacy_status]
+  )
+)
+
+begin
+  puts "⏳ Uploading..."
+  res = youtube.insert_video("snippet,status", video,
+    upload_source: options[:file],
+    content_type: "video/*"
+  )
+  puts "✅ Uploaded! Video ID: #{res.id}"
+rescue => e
+  warn "❌ Upload failed: #{e.message}"
+end
