@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require "automation"
+
+puts "Automation gem CLI loaded!"
