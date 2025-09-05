@@ -1,33 +1,37 @@
 source "https://rubygems.org"
-# Hello! This is where you manage which Jekyll version is used to run.
 
-#  run `bundle install`. Run Jekyll with `bundle exec`, like so:
-#
-#     bundle exec jekyll serve
-#
-# This will help ensure the proper Jekyll version is running.
-  gem "jekyll", "~> 4.3.3"
-  gem "dotenv"
-  gem "github-pages"
-  gem "jekyll-github-metadata"
-  gem "rake", "~> 13.0"
-  gem "automation", "~> 0.1.0"
-  gem "rspec/minitest/test-unit/test", "~> "
-  gem  "rdoc", "~>  "
-  gem  "google-api-client" "~>"
-  
-# jekyll feed the jekyll_plugins. 
+# --- Core Gems ---
+gem "dotenv", "~> 3.3"                    # environment variables
+gem "rake", "~> 13.0"
+gem "rdoc", "~> 6.3"
+
+# --- YouTube Automation / Custom Gem ---
+gemspec                                   # includes your automation gem locally
+gem "google-apis-youtube_v3", "~> 0.61.0"
+gem "signet", "~> 0.19"
+gem "launchy", "~> 2.5"
+
+# --- Jekyll / GitHub Pages ---
+gem "github-pages", group: :jekyll_plugins
+gem "jekyll", "~> 4.3.3"                  # optional, overrides GitHub Pages Jekyll if needed
+gem "jekyll-github-metadata"
+
+# --- Jekyll plugins ---
 group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.12"
 end
 
-# bundle the tzinfo-data gem
-# and associated library.
+# --- Testing ---
+gem "rspec", "~> 3.12"
+
+# --- Platform-specific (Windows) ---
 platforms :mingw, :x64_mingw, :mswin, :jruby do
   gem "tzinfo", ">= 1", "< 3"
   gem "tzinfo-data"
+  gem "wdm", "~> 0.1.1"
 end
 
-# Performance-booster for watching directories on Windows
-gem "wdm", "~> 0.1.1", :platforms => [:mingw, :x64_mingw, :mswin]
-gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
+# --- JRuby support ---
+platforms :jruby do
+  gem "http_parser.rb", "~> 0.6.0"
+end
