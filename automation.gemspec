@@ -3,51 +3,49 @@
 require_relative "lib/automation/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "automation"
-  spec.version =  Automation::VERSION:: 0.1.0
-  spec.authors = ["munsterkreations"]
-  spec.email = ["munsterkreations@users.noreply.github.com"]
+  spec.name          = "automation"
+  spec.version       = Automation::VERSION
+  spec.authors       = ["munsterkreations"]
+  spec.email         = ["munsterkreations@users.noreply.github.com"]
 
-  spec.summary = "The youtube_content_creator provides a simple interface for scraping data from popular social media platforms like TikTok and Instagram."
-  
-  spec.description = "The DataScraper is a versatile tool for scraping data from popular social media platforms like TikTok and Instagram. 
-   It provides easy-to-use classes for extracting user information, such as follower counts and following counts. With built-in error handling and customizable configuration options,
-   the DataScraper simplifies the process of collecting data from these platforms. 
-   Start scraping user data effortlessly with just a few lines of code"
+  spec.summary       = "The automation gem provides a simple interface for interacting with social media APIs like YouTube, TikTok, and Instagram."
+  spec.description   = <<~DESC
+    The Automation gem is a versatile tool for interacting with social media platforms. 
+    It provides easy-to-use classes for uploading videos to YouTube, managing playlists, 
+    and scraping basic data from popular platforms. Built-in error handling and configuration 
+    options simplify automation workflows.
+  DESC
 
-  spec.homepage = "https://github.com/munsterkreations/automation.git"
-  spec.license = "MIT"
+  spec.homepage      = "https://github.com/munsterkreations/automation"
+  spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = ""
+  # Metadata
+  spec.metadata["homepage_uri"]    = spec.homepage
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"]   = ""
 
-  # Specify which files should be added to the gem when it is released.
-  # The `git ls-files -z` loads the files in the Rubythat have been added into git.
-  spec.files = `git ls-files -z`.split("\x0").reject { |f|
-      (File.expand_path(f) == __FILE__) ||
-        f.match(%r{^(bin/ test/ spec/ features)/}[ .git .circleci appveyor Gemfile])}
-    end
+  # Include only relevant files (exclude tests, hidden files, tmp, etc.)
+  spec.files = Dir.glob("lib/**/*") + ["README.md", "LICENSE.txt"]
+  spec.files.reject! do |f|
+    f =~ %r{^(test|spec|features|tmp|\.|exe/)} || File.directory?(f)
   end
-  spec.bindir = "exe"
-  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+
+  spec.bindir        = "exe"
+  spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
-   spec.add_dependency "google-api-client", "~> 0.41"
-    spec.add_dependency "rdoc", "~> 6.3"
-   spec.add_dependency "nokogiri" "~> 1.8"
-   spec.add_dependency "jekyll", "~> 4.3.3"
-   spec.add_dependency "dotenv"
-   spec.add_dependency "github-pages"
-   spec.add_dependency "jekyll-github-metadata"
-   spec.add_dependency "rake", "~> 13.0"
-   spec.add_dependency "automation", "~> 0.1.0"
-   spec.add_dependency "rspec/minitest/test-unit/test", "~> "
-   
+  # Dependencies
+  spec.add_dependency "google-apis-youtube_v3", "~> 0.61.0"
+  spec.add_dependency "signet", "~> 0.19"
+  spec.add_dependency "launchy", "~> 2.5"
+  spec.add_dependency "dotenv", "~> 3.3"
+  spec.add_dependency "rake", "~> 13.0"
+  spec.add_dependency "rdoc", "~> 6.3"
+  spec.add_dependency "rspec", "~> 3.12"
 
-  # For more information and examples about making a new gem, check out our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  # Optional: GitHub Pages / Jekyll support
+  spec.add_dependency "github-pages"
+  spec.add_dependency "jekyll", "~> 4.3.3"
+  spec.add_dependency "jekyll-github-metadata"
 end
