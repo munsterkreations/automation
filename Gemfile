@@ -6,14 +6,14 @@ gem "rake", "~> 13.0"
 gem "rdoc", "~> 6.3"
 
 # --- YouTube Automation / Custom Gem ---
-gemspec                                   # includes your automation gem locally
+gemspec                           is        # includes your automation gem locally
 gem "google-apis-youtube_v3", "~> 0.61.0"
 gem "signet", "~> 0.19"
 gem "launchy", "~> 2.5"
 
 # --- Jekyll / GitHub Pages ---
 gem "github-pages", group: :jekyll_plugins
-gem "jekyll", "~> 4.3.3"                  # optional, overrides GitHub Pages Jekyll if needed
+gem "jekyll", "~> 4.4.1"                  # optional, overrides GitHub Pages Jekyll if needed
 gem "jekyll-github-metadata"
 
 # --- Jekyll plugins ---
