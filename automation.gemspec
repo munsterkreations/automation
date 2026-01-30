@@ -51,6 +51,6 @@ Gem::Specification.new do |spec|
 
   # Optional: GitHub Pages / Jekyll support
   spec.add_dependency "github-pages"
-  spec.add_dependency "jekyll", "~> 4.4.1"
+  spec.add_dependency "jekyll", "~> 4.2"
   spec.add_dependency "jekyll-github-metadata"
 end
