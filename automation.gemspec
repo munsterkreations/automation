@@ -44,7 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "google-apis-youtube_v3", "~> 0.61.0"
   spec.add_dependency "signet", "~> 0.19"
   spec.add_dependency "launchy", "~> 2.5"
-  spec.add_dependency "dotenv", "~> 3.3"
+  spec.add_dependency "dotenv", "~> 3.2"
   spec.add_dependency "rake", "~> 13.0"
   spec.add_dependency "rdoc", "~> 6.3"
   spec.add_dependency "rspec", "~> 3.12"
