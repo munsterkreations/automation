@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
 # --- Core Gems ---                  # environment variables
+gem "dotenv", "~> 3.2"
 gem "rake", "~> 13.0"
 gem "rdoc", "~> 6.3"
 
