@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   # Metadata
   spec.metadata["homepage_uri"]    = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"]   = ""
+  spec.metadata["changelog_uri"]   = "https://github.com/munsterkreations/automation/blob/main/CHANGELOG.md"
 
   # Include only relevant files (exclude tests, hidden files, tmp, etc.)
   spec.files = Dir.glob("lib/**/*") + ["README.md", "LICENSE.txt"]
