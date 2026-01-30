@@ -13,7 +13,7 @@ gem "launchy", "~> 2.5"
 
 # --- Jekyll / GitHub Pages ---
 gem "github-pages", group: :jekyll_plugins
-gem "jekyll", "~> 4.4.1"                  # optional, overrides GitHub Pages Jekyll if needed
+gem "jekyll", "~> 4.2"                 # optional, overrides GitHub Pages Jekyll if needed
 gem "jekyll-github-metadata"
 
 # --- Jekyll plugins ---
