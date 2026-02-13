@@ -1,4 +1,182 @@
 #!/usr/bin/env ruby
-require "automation"
+# frozen_string_literal: true
 
-puts "Automation gem CLI loaded!"
+require_relative "../lib/automation"
+require_relative "../lib/oauth_util"
+require "optparse"
+
+# CLI wrapper for the automation gem
+class AutomationCLI
+  SCOPE = Google::Apis::YoutubeV3::AUTH_YOUTUBE_FORCE_SSL
+
+  def self.run(args = ARGV)
+    command = args.shift
+
+    case command
+    when "auth"
+      authenticate
+    when "upload"
+      upload_video(args)
+    when "playlist"
+      create_playlist(args)
+    when "help", "--help", "-h", nil
+      show_help
+    else
+      puts "Unknown command: #{command}"
+      show_help
+      exit 1
+    end
+  end
+
+  def self.authenticate
+    puts "🔐 Starting OAuth authentication..."
+    helper = CommandLineOAuthHelper.new(SCOPE)
+    helper.authorize
+    puts "✅ Authentication successful! Token saved to token.json"
+  rescue => e
+    puts "❌ Authentication failed: #{e.message}"
+    exit 1
+  end
+
+  def self.upload_video(args)
+    options = parse_upload_options(args)
+
+    unless options[:file] && File.exist?(options[:file])
+      puts "❌ Error: Must specify a valid video file with --file"
+      exit 1
+    end
+
+    helper = CommandLineOAuthHelper.new(SCOPE)
+    auth = helper.authorize
+
+    youtube = Google::Apis::YoutubeV3::YouTubeService.new
+    youtube.authorization = auth
+
+    video = Google::Apis::YoutubeV3::Video.new(
+      snippet: Google::Apis::YoutubeV3::VideoSnippet.new(
+        title: options[:title],
+        description: options[:description],
+        tags: options[:keywords],
+        category_id: options[:category]
+      ),
+      status: Google::Apis::YoutubeV3::VideoStatus.new(
+        privacy_status: options[:privacy]
+      )
+    )
+
+    puts "⏳ Uploading: #{options[:title]}..."
+    result = youtube.insert_video(
+      "snippet,status",
+      video,
+      upload_source: options[:file],
+      content_type: "video/*"
+    )
+
+    puts "✅ Upload successful!"
+    puts "Video ID: #{result.id}"
+    puts "URL: https://www.youtube.com/watch?v=#{result.id}"
+  rescue => e
+    puts "❌ Upload failed: #{e.message}"
+    exit 1
+  end
+
+  def self.create_playlist(args)
+    options = parse_playlist_options(args)
+
+    helper = CommandLineOAuthHelper.new(SCOPE)
+    auth = helper.authorize
+
+    youtube = Google::Apis::YoutubeV3::YouTubeService.new
+    youtube.authorization = auth
+
+    playlist = Google::Apis::YoutubeV3::Playlist.new(
+      snippet: Google::Apis::YoutubeV3::PlaylistSnippet.new(
+        title: options[:title],
+        description: options[:description]
+      ),
+      status: Google::Apis::YoutubeV3::PlaylistStatus.new(
+        privacy_status: options[:privacy]
+      )
+    )
+
+    puts "⏳ Creating playlist: #{options[:title]}..."
+    result = youtube.insert_playlist("snippet,status", playlist)
+
+    puts "✅ Playlist created!"
+    puts "Playlist ID: #{result.id}"
+  rescue => e
+    puts "❌ Failed: #{e.message}"
+    exit 1
+  end
+
+  def self.parse_upload_options(args)
+    options = {
+      title: "Untitled Video",
+      description: "Uploaded via Automation gem",
+      privacy: "public",
+      category: "22",
+      keywords: []
+    }
+
+    OptionParser.new do |opts|
+      opts.on("-f", "--file FILE") { |v| options[:file] = v }
+      opts.on("-t", "--title TITLE") { |v| options[:title] = v }
+      opts.on("-d", "--description DESC") { |v| options[:description] = v }
+      opts.on("-p", "--privacy STATUS") { |v| options[:privacy] = v }
+      opts.on("-c", "--category ID") { |v| options[:category] = v }
+      opts.on("-k", "--keywords x,y,z", Array) { |v| options[:keywords] = v }
+    end.parse!(args)
+
+    options
+  end
+
+  def self.parse_playlist_options(args)
+    options = {
+      title: "New Playlist",
+      description: "Created via Automation gem",
+      privacy: "public"
+    }
+
+    OptionParser.new do |opts|
+      opts.on("-t", "--title TITLE") { |v| options[:title] = v }
+      opts.on("-d", "--description DESC") { |v| options[:description] = v }
+      opts.on("-p", "--privacy STATUS") { |v| options[:privacy] = v }
+    end.parse!(args)
+
+    options
+  end
+
+  def self.show_help
+    puts <<~HELP
+      Automation CLI - YouTube Channel Automation
+
+      Usage: cli [command] [options]
+
+      Commands:
+        auth                Authenticate with YouTube
+        upload              Upload a video
+        playlist            Create a playlist
+        help                Show this help
+
+      Upload Options:
+        -f, --file FILE           Video file to upload (required)
+        -t, --title TITLE         Video title
+        -d, --description DESC    Video description
+        -p, --privacy STATUS      Privacy: public|private|unlisted
+        -c, --category ID         Category ID (default: 22)
+        -k, --keywords x,y,z      Keywords (comma-separated)
+
+      Playlist Options:
+        -t, --title TITLE         Playlist title
+        -d, --description DESC    Playlist description
+        -p, --privacy STATUS      Privacy: public|private|unlisted
+
+      Examples:
+        cli auth
+        cli upload -f video.mp4 -t "My Video" -d "Description"
+        cli playlist -t "My Playlist"
+    HELP
+  end
+end
+
+AutomationCLI.run(ARGV) if __FILE__ == $PROGRAM_NAME
